@@ -1,0 +1,71 @@
+From: "You-Sheng Yang (vicamo)" <vicamo.yang@canonical.com>
+Date: Tue, 10 May 2022 01:15:00 +0800
+Subject: build: drop the use of EXTERNAL_BUILD
+
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
+---
+ Makefile                              | 4 +---
+ dkms.conf                             | 3 ---
+ drivers/media/pci/intel/ipu6/Makefile | 9 ++-------
+ 3 files changed, 3 insertions(+), 13 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 69136d9..cd26065 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,8 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ # Copyright (c) 2021 Intel Corporation.
+ 
+-export EXTERNAL_BUILD = 1
+-
+ export CONFIG_VIDEO_INTEL_IPU6 = m
+ obj-y += drivers/media/pci/intel/
+ 
+@@ -16,7 +14,7 @@ obj-y += drivers/media/i2c/
+ KERNELRELEASE	?= `uname -r`
+ KERNEL_SRC := /lib/modules/$(KERNELRELEASE)/build
+ MODSRC := $(shell pwd)
+-ccflags-y += -I$(MODSRC)/include/
++subdir-ccflags-y += -I$(src)/include/
+ 
+ all:
+ 	$(MAKE) -C $(KERNEL_SRC) M=$(MODSRC) modules
+diff --git a/dkms.conf b/dkms.conf
+index 971093c..c5b6169 100644
+--- a/dkms.conf
++++ b/dkms.conf
+@@ -1,9 +1,6 @@
+ PACKAGE_NAME=ipu6-drivers
+ PACKAGE_VERSION=0.0.0
+ 
+-MAKE[0]="make EXTERNAL_BUILD=1"
+-CLEAN="make clean"
+-
+ BUILT_MODULE_NAME[0]="intel-ipu6"
+ BUILT_MODULE_LOCATION[0]="drivers/media/pci/intel/ipu6"
+ DEST_MODULE_LOCATION[0]="/kernel/drivers/media/pci/intel/ipu6"
+diff --git a/drivers/media/pci/intel/ipu6/Makefile b/drivers/media/pci/intel/ipu6/Makefile
+index 11464fd..2627341 100644
+--- a/drivers/media/pci/intel/ipu6/Makefile
++++ b/drivers/media/pci/intel/ipu6/Makefile
+@@ -1,10 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ # Copyright (c) 2017 - 2020 Intel Corporation.
+ 
+-ifneq ($(EXTERNAL_BUILD), 1)
+-srcpath := $(srctree)
+-endif
+-
+ ccflags-y += -DIPU_TPG_FRAME_SYNC -DIPU_PSYS_GPC \
+ 		-DIPU_ISYS_GPC
+ 
+@@ -53,6 +49,5 @@ endif
+ 
+ obj-$(CONFIG_VIDEO_INTEL_IPU6)		+= intel-ipu6-psys.o
+ 
+-ccflags-y += -I$(srcpath)/$(src)/../../../../../include/
+-ccflags-y += -I$(srcpath)/$(src)/../
+-ccflags-y += -I$(srcpath)/$(src)/
++ccflags-y += -I$(src)/..
++ccflags-y += -I$(src)

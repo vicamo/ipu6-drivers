@@ -1,0 +1,30 @@
+From: "You-Sheng Yang (vicamo)" <vicamo.yang@canonical.com>
+Date: Tue, 10 May 2022 00:13:38 +0800
+Subject: compat: accommodate to SET_FS support drop
+
+Follow commit 967747bbc084 ("uaccess: remove CONFIG_SET_FS").
+
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
+---
+ drivers/media/pci/intel/ipu-psys-compat32.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/media/pci/intel/ipu-psys-compat32.c b/drivers/media/pci/intel/ipu-psys-compat32.c
+index 7ede5d0..6e83d04 100644
+--- a/drivers/media/pci/intel/ipu-psys-compat32.c
++++ b/drivers/media/pci/intel/ipu-psys-compat32.c
+@@ -236,10 +236,14 @@ long ipu_psys_compat_ioctl32(struct file *file, unsigned int cmd,
+ 		err = native_ioctl(file, cmd, (unsigned long)&karg);
+ 		set_fs(old_fs);
+ #else
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+ 		mm_segment_t old_fs = force_uaccess_begin();
++#endif
+ 
+ 		err = native_ioctl(file, cmd, (unsigned long)&karg);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+ 		force_uaccess_end(old_fs);
++#endif
+ #endif
+ 	}
+ 

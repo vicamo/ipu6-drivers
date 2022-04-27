@@ -1,0 +1,49 @@
+From: "You-Sheng Yang (vicamo)" <vicamo@gmail.com>
+Date: Wed, 27 Apr 2022 17:33:53 +0800
+Subject: build: disable ivsc depending sensors
+
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo@gmail.com>
+---
+ Makefile  |  4 ++--
+ dkms.conf | 12 ++++++------
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 392830f..69136d9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -8,8 +8,8 @@ obj-y += drivers/media/pci/intel/
+ 
+ export CONFIG_VIDEO_HM11B1 = m
+ export CONFIG_VIDEO_OV01A1S = m
+-export CONFIG_VIDEO_OV01A10 = m
+-export CONFIG_VIDEO_OV02C10 = m
++#export CONFIG_VIDEO_OV01A10 = m
++#export CONFIG_VIDEO_OV02C10 = m
+ export CONFIG_POWER_CTRL_LOGIC = m
+ obj-y += drivers/media/i2c/
+ 
+diff --git a/dkms.conf b/dkms.conf
+index a1a7208..971093c 100644
+--- a/dkms.conf
++++ b/dkms.conf
+@@ -28,13 +28,13 @@ BUILT_MODULE_NAME[5]="ov01a1s"
+ BUILT_MODULE_LOCATION[5]="drivers/media/i2c"
+ DEST_MODULE_LOCATION[5]="/kernel/drivers/media/i2c"
+ 
+-BUILT_MODULE_NAME[6]="ov01a10"
+-BUILT_MODULE_LOCATION[6]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[6]="/kernel/drivers/media/i2c"
++#BUILT_MODULE_NAME[6]="ov01a10"
++#BUILT_MODULE_LOCATION[6]="drivers/media/i2c"
++#DEST_MODULE_LOCATION[6]="/kernel/drivers/media/i2c"
+ 
+-BUILT_MODULE_NAME[7]="ov02c10"
+-BUILT_MODULE_LOCATION[7]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[7]="/kernel/drivers/media/i2c"
++#BUILT_MODULE_NAME[7]="ov02c10"
++#BUILT_MODULE_LOCATION[7]="drivers/media/i2c"
++#DEST_MODULE_LOCATION[7]="/kernel/drivers/media/i2c"
+ 
+ REMAKE_INITRD="no"
+ AUTOINSTALL="yes"

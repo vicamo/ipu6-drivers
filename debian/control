@@ -1,0 +1,26 @@
+Source: ipu6-drivers
+Section: kernel
+Priority: optional
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: You-Sheng Yang <vicamo@gmail.com>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-modaliases,
+ dkms,
+ quilt,
+Standards-Version: 4.5.0
+Homepage: https://gitlab.com/intel/ipu6-drivers
+Vcs-Browser: https://gitlab.com/intel/ipu6-drivers/tree/master
+Vcs-Git: https://gitlab.com/intel/ipu6-drivers.git
+
+Package: intel-ipu6-dkms
+Architecture: amd64
+Depends:
+ dkms,
+ libc6-dev | libc-dev,
+ ${misc:Depends},
+Provides: ipu6-modules
+Description: Intel Integrated Image Processing Unit 6 (IPU6) driver
+ This package provides kernel drivers for MIPI cameras through the Intel IPU6
+ on Intel Tiger Lake and Alder Lake platforms.

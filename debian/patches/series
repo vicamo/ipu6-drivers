@@ -1,0 +1,7 @@
+0001-build-disable-ivsc-depending-sensors.patch
+0002-build-drop-the-use-of-EXTERNAL_BUILD.patch
+0003-build-respect-kernel_source_dir-from-dkms.patch
+0004-dkms-use-debian-package-version-as-PACKAGE_VERSION.patch
+0005-compat-Remove-usage-of-the-deprecated-pci-dma-compat.patch
+0006-compat-accommodate-to-iosys-map-API-renames.patch
+0007-compat-accommodate-to-SET_FS-support-drop.patch

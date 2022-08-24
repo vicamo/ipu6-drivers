@@ -5,3 +5,4 @@
 0005-compat-Remove-usage-of-the-deprecated-pci-dma-compat.patch
 0006-compat-accommodate-to-iosys-map-API-renames.patch
 0007-compat-accommodate-to-SET_FS-support-drop.patch
+0008-compat-fix-media_entity_remote_pad-renamed-to-media_.patch

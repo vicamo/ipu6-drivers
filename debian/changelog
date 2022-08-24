@@ -8,5 +8,7 @@ ipu6-drivers (0~git202204270226.8357dee9-0ubuntu1) kinetic; urgency=low
     - compat: Remove usage of the deprecated "pci-dma-compat.h" API
     - compat: accommodate to iosys-map API renames
     - compat: accommodate to SET_FS support drop
+    - compat: fix media_entity_remote_pad renamed to
+      media_pad_remote_pad_first
 
  -- You-Sheng Yang <vicamo.yang@canonical.com>  Wed, 27 Apr 2022 16:34:34 +0800

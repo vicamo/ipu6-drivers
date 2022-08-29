@@ -1,10 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (c) 2017 - 2020 Intel Corporation.
 
-ifneq ($(EXTERNAL_BUILD), 1)
-srcpath := $(srctree)
-endif
-
 ccflags-y += -DIPU_TPG_FRAME_SYNC -DIPU_PSYS_GPC \
 		-DIPU_ISYS_GPC
 
@@ -17,6 +13,9 @@ intel-ipu6-objs				+= ../ipu.o \
 					   ../ipu-cpd.o \
 					   ipu6.o \
 					   ../ipu-fw-com.o
+ifdef CONFIG_IPU_ISYS_BRIDGE
+intel-ipu6-objs				+= ../ipu-isys-bridge.o
+endif
 
 obj-$(CONFIG_VIDEO_INTEL_IPU6)		+= intel-ipu6.o
 
@@ -53,6 +52,5 @@ endif
 
 obj-$(CONFIG_VIDEO_INTEL_IPU6)		+= intel-ipu6-psys.o
 
-ccflags-y += -I$(srcpath)/$(src)/../../../../../include/
-ccflags-y += -I$(srcpath)/$(src)/../
-ccflags-y += -I$(srcpath)/$(src)/
+ccflags-y += -I$(src)/..
+ccflags-y += -I$(src)

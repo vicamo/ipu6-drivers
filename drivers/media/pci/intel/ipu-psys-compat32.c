@@ -235,11 +235,13 @@ long ipu_psys_compat_ioctl32(struct file *file, unsigned int cmd,
 		set_fs(KERNEL_DS);
 		err = native_ioctl(file, cmd, (unsigned long)&karg);
 		set_fs(old_fs);
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
 		mm_segment_t old_fs = force_uaccess_begin();
 
 		err = native_ioctl(file, cmd, (unsigned long)&karg);
 		force_uaccess_end(old_fs);
+#else
+		err = native_ioctl(file, cmd, (unsigned long)&karg);
 #endif
 	}
 

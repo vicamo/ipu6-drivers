@@ -967,6 +967,14 @@ static int ov01a1s_probe(struct i2c_client *client)
 	s64 link_freq;
 #endif
 
+#if IS_ENABLED(CONFIG_INTEL_VSC)
+#if defined(BUILD_DKMS)
+	ret = init_vsc_symbols();
+	if (ret)
+		return ret;
+#endif
+#endif
+
 	ov01a1s = devm_kzalloc(&client->dev, sizeof(*ov01a1s), GFP_KERNEL);
 	if (!ov01a1s)
 		return -ENOMEM;

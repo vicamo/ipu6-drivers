@@ -21,7 +21,10 @@ KERNELRELEASE ?= $(shell uname -r)
 KERNEL_SRC ?= /lib/modules/$(KERNELRELEASE)/build
 MODSRC := $(shell pwd)
 
-subdir-ccflags-y += -I$(src)/include/
+subdir-ccflags-y += \
+	-I$(src)/backport-include/ \
+	-I$(src)/include/ \
+	-DBUILD_DKMS
 
 define set-feature-ccflags-for
 subdir-ccflags-$($(cfg)) += $(if $(filter y m,$($(1))),-D$(1)$(if $(filter m,$($(1))),_MODULE)=1)

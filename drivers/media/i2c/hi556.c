@@ -1111,6 +1111,12 @@ static int hi556_probe(struct i2c_client *client)
 #endif
 
 #if IS_ENABLED(CONFIG_INTEL_VSC)
+#if defined(BUILD_DKMS)
+	ret = init_vsc_symbols();
+	if (ret)
+		return ret;
+#endif
+
 	conf.lane_num = HI556_DATA_LANES;
 	/* frequency unit 100k */
 	conf.freq = HI556_LINK_FREQ_437MHZ / 100000;

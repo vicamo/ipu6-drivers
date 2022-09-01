@@ -921,6 +921,12 @@ static int hm2170_probe(struct i2c_client *client)
 #endif
 
 #if IS_ENABLED(CONFIG_INTEL_VSC)
+#if defined(BUILD_DKMS)
+	ret = init_vsc_symbols();
+	if (ret)
+		return ret;
+#endif
+
 	conf.lane_num = HM2170_DATA_LANES;
 	/* frequency unit 100k */
 	conf.freq = HM2170_LINK_FREQ_384MHZ / 100000;

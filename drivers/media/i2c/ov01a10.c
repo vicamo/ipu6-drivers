@@ -885,6 +885,12 @@ static int ov01a10_probe(struct i2c_client *client)
 #endif
 
 #if IS_ENABLED(CONFIG_INTEL_VSC)
+#if defined(BUILD_DKMS)
+	ret = init_vsc_symbols();
+	if (ret)
+		return ret;
+#endif
+
 	conf.lane_num = OV01A10_DATA_LANES;
 	/* frequency unit 100k */
 	conf.freq = OV01A10_LINK_FREQ_400MHZ / 100000;

@@ -1,9 +1,10 @@
-ipu6-drivers (0~git202208240215.a0351ce2-0ubuntu1) kinetic; urgency=low
+ipu6-drivers (0~git202209170648.e1f9c478-0ubuntu1) kinetic; urgency=low
 
   * Initial release. (LP: #1972109)
     - build: disable ivsc depending sensors
     - dkms: use debian package version as PACKAGE_VERSION
     - compat: fix media_entity_remote_pad renamed to
       media_pad_remote_pad_first
+    - build: fix kernel feature macro definitions
 
- -- You-Sheng Yang <vicamo.yang@canonical.com>  Wed, 24 Aug 2022 15:05:57 +0800
+ -- You-Sheng Yang <vicamo.yang@canonical.com>  Mon, 19 Sep 2022 19:53:49 +0800

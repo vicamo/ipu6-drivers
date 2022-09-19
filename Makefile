@@ -32,11 +32,10 @@ mei_pse-y := drivers/misc/ivsc/mei_pse.o
 obj-m += mei_ace_debug.o
 mei_ace_debug-y := drivers/misc/ivsc/mei_ace_debug.o
 
-export CONFIG_INTEL_VSC = y
+export CONFIG_INTEL_VSC = m
 
 export CONFIG_VIDEO_INTEL_IPU6 = m
 export CONFIG_IPU_ISYS_BRIDGE = y
-export CONFIG_INTEL_SKL_INT3472 = m
 obj-y += drivers/media/pci/intel/
 
 export CONFIG_VIDEO_HM11B1 = m
@@ -57,14 +56,13 @@ ccflags-y += -I$(src)/backport-include/drivers/misc/mei/
 
 subdir-ccflags-y += -I$(src)/include/
 
-subdir-ccflags-$(CONFIG_INTEL_VSC) += \
-        -DCONFIG_INTEL_VSC
-subdir-ccflags-$(CONFIG_IPU_ISYS_BRIDGE) += \
-	-DCONFIG_IPU_ISYS_BRIDGE
-subdir-ccflags-$(CONFIG_INTEL_SKL_INT3472) += \
-	-DCONFIG_INTEL_SKL_INT3472
-subdir-ccflags-$(CONFIG_POWER_CTRL_LOGIC) += \
-	-DCONFIG_POWER_CTRL_LOGIC
+define set-feature-ccflags-for
+subdir-ccflags-$($(cfg)) += $(if $(filter y m,$($(1))),-D$(1)$(if $(filter m,$($(1))),_MODULE)=1)
+endef
+
+$(eval $(call set-feature-ccflags-for,CONFIG_INTEL_VSC))
+$(eval $(call set-feature-ccflags-for,CONFIG_IPU_ISYS_BRIDGE))
+$(eval $(call set-feature-ccflags-for,CONFIG_POWER_CTRL_LOGIC))
 subdir-ccflags-y += $(subdir-ccflags-m)
 
 all:

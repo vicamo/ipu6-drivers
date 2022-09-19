@@ -4,33 +4,42 @@ Subject: build: disable ivsc depending sensors
 
 Signed-off-by: You-Sheng Yang (vicamo) <vicamo@gmail.com>
 ---
- Makefile  |  4 ++--
- dkms.conf | 23 ++++++++++++-----------
- 2 files changed, 14 insertions(+), 13 deletions(-)
+ Makefile  |  8 ++++----
+ dkms.conf | 39 ++++++++++++++++++++-------------------
+ 2 files changed, 24 insertions(+), 23 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 2088212..1f46160 100644
+index 2220144..0d72d53 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -9,8 +9,8 @@ obj-y += drivers/media/pci/intel/
- export CONFIG_INTEL_SKL_INT3472 = m
+@@ -7,11 +7,11 @@ export CONFIG_INTEL_SKL_INT3472 = m
+ obj-y += drivers/media/pci/intel/
+ 
  export CONFIG_VIDEO_HM11B1 = m
- export CONFIG_VIDEO_OV01A1S = m
+-export CONFIG_VIDEO_OV01A1S = m
 -export CONFIG_VIDEO_OV01A10 = m
 -export CONFIG_VIDEO_OV02C10 = m
++#export CONFIG_VIDEO_OV01A1S = m
 +#export CONFIG_VIDEO_OV01A10 = m
 +#export CONFIG_VIDEO_OV02C10 = m
  export CONFIG_VIDEO_OV2740 = m
+-export CONFIG_VIDEO_HM2170 = m
++#export CONFIG_VIDEO_HM2170 = m
+ # export CONFIG_POWER_CTRL_LOGIC = m
  obj-y += drivers/media/i2c/
  
 diff --git a/dkms.conf b/dkms.conf
-index befc0b3..8f4c2d0 100644
+index 3184651..bcb2eae 100644
 --- a/dkms.conf
 +++ b/dkms.conf
-@@ -24,17 +24,18 @@ BUILT_MODULE_NAME[4]="ov01a1s"
- BUILT_MODULE_LOCATION[4]="drivers/media/i2c"
- DEST_MODULE_LOCATION[4]="/kernel/drivers/media/i2c"
+@@ -20,25 +20,26 @@ BUILT_MODULE_NAME[3]="hm11b1"
+ BUILT_MODULE_LOCATION[3]="drivers/media/i2c"
+ DEST_MODULE_LOCATION[3]="/kernel/drivers/media/i2c"
  
+-BUILT_MODULE_NAME[4]="ov01a1s"
+-BUILT_MODULE_LOCATION[4]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[4]="/kernel/drivers/media/i2c"
+-
 -BUILT_MODULE_NAME[5]="ov01a10"
 -BUILT_MODULE_LOCATION[5]="drivers/media/i2c"
 -DEST_MODULE_LOCATION[5]="/kernel/drivers/media/i2c"
@@ -42,7 +51,15 @@ index befc0b3..8f4c2d0 100644
 -BUILT_MODULE_NAME[7]="ov2740"
 -BUILT_MODULE_LOCATION[7]="drivers/media/i2c"
 -DEST_MODULE_LOCATION[7]="/kernel/drivers/media/i2c"
-+i=4
+-
+-BUILT_MODULE_NAME[8]="hm2170"
+-BUILT_MODULE_LOCATION[8]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[8]="/kernel/drivers/media/i2c"
++i=3
++#BUILT_MODULE_NAME[$((++i))]="ov01a1s"
++#BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++#DEST_MODULE_LOCATION[$i]="/kernel/drivers/media/i2c"
++
 +#BUILT_MODULE_NAME[$((++i))]="ov01a10"
 +#BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
 +#DEST_MODULE_LOCATION[$i]="/kernel/drivers/media/i2c"
@@ -54,6 +71,10 @@ index befc0b3..8f4c2d0 100644
 +BUILT_MODULE_NAME[$((++i))]="ov2740"
 +BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
 +DEST_MODULE_LOCATION[$i]="/kernel/drivers/media/i2c"
++
++#BUILT_MODULE_NAME[$((++i))]="hm2170"
++#BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++#DEST_MODULE_LOCATION[$i]="/kernel/drivers/media/i2c"
  
  REMAKE_INITRD="no"
  AUTOINSTALL="yes"

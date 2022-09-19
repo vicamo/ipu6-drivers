@@ -12,14 +12,19 @@ default, comment-out its feature macro definition as well.
 
 Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
 ---
- Makefile | 9 +++------
- 1 file changed, 3 insertions(+), 6 deletions(-)
+ Makefile | 13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 0d72d53..e2c6771 100644
+index f4ca9b1..f8bc96b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -3,7 +3,6 @@
+@@ -32,11 +32,10 @@ mei_pse-y := drivers/misc/ivsc/mei_pse.o
+ obj-m += mei_ace_debug.o
+ mei_ace_debug-y := drivers/misc/ivsc/mei_ace_debug.o
+ 
+-export CONFIG_INTEL_VSC = y
++export CONFIG_INTEL_VSC = m
  
  export CONFIG_VIDEO_INTEL_IPU6 = m
  export CONFIG_IPU_ISYS_BRIDGE = y
@@ -27,9 +32,12 @@ index 0d72d53..e2c6771 100644
  obj-y += drivers/media/pci/intel/
  
  export CONFIG_VIDEO_HM11B1 = m
-@@ -21,11 +20,9 @@ MODSRC := $(shell pwd)
+@@ -58,13 +57,11 @@ ccflags-y += -I$(src)/backport-include/drivers/misc/mei/
  subdir-ccflags-y += -I$(src)/include/
  
+ subdir-ccflags-$(CONFIG_INTEL_VSC) += \
+-        -DCONFIG_INTEL_VSC
++        -DCONFIG_INTEL_VSC_MODULE=1
  subdir-ccflags-$(CONFIG_IPU_ISYS_BRIDGE) += \
 -	-DCONFIG_IPU_ISYS_BRIDGE
 -subdir-ccflags-$(CONFIG_INTEL_SKL_INT3472) += \

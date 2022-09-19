@@ -1,0 +1,201 @@
+From: TheSola10 <me@thesola.io>
+Date: Thu, 1 Sep 2022 14:12:12 +0200
+Subject: ivsc: load symbols by kprobe
+
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
+---
+ Makefile                     |  4 ++-
+ backport-include/linux/vsc.h | 63 ++++++++++++++++++++++++++++++++++++++++----
+ drivers/media/i2c/hi556.c    |  4 +++
+ drivers/media/i2c/hm2170.c   |  4 +++
+ drivers/media/i2c/ov01a10.c  |  4 +++
+ drivers/media/i2c/ov01a1s.c  |  6 +++++
+ drivers/media/i2c/ov02c10.c  |  4 +++
+ 7 files changed, 83 insertions(+), 6 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 43c459b..32f3d70 100644
+--- a/Makefile
++++ b/Makefile
+@@ -21,7 +21,9 @@ KERNELRELEASE ?= $(shell uname -r)
+ KERNEL_SRC ?= /lib/modules/$(KERNELRELEASE)/build
+ MODSRC := $(shell pwd)
+ 
+-subdir-ccflags-y += -I$(src)/include/
++subdir-ccflags-y += \
++	-I$(src)/backport-include/ \
++	-I$(src)/include/
+ 
+ subdir-ccflags-$(CONFIG_INTEL_VSC) += \
+         -DCONFIG_INTEL_VSC_MODULE=1
+diff --git a/backport-include/linux/vsc.h b/backport-include/linux/vsc.h
+index 8f8d404..71486dd 100644
+--- a/backport-include/linux/vsc.h
++++ b/backport-include/linux/vsc.h
+@@ -4,6 +4,15 @@
+ #define _LINUX_VSC_H_
+ 
+ #include <linux/types.h>
++#include <linux/module.h>
++#include <linux/version.h>
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0))
++#include <linux/kprobes.h>
++#ifndef CONFIG_KPROBES
++# error "You need kprobes :("
++#endif
++#endif
++
+ 
+ /**
+  * @brief VSC camera ownership definition
+@@ -48,6 +57,42 @@ struct vsc_camera_status {
+ typedef void (*vsc_privacy_callback_t)(void *handle,
+ 				       enum vsc_privacy_status status);
+ 
++
++typedef int (*vsc_acquire_camera_sensor_t)(struct vsc_mipi_config *,
++					   vsc_privacy_callback_t,
++					   void *,
++					   struct vsc_camera_status *);
++typedef int (*vsc_release_camera_sensor_t)(struct vsc_camera_status *);
++
++static vsc_acquire_camera_sensor_t __p_vsc_acquire_camera_sensor = NULL;
++static vsc_release_camera_sensor_t __p_vsc_release_camera_sensor = NULL;
++
++static int init_vsc_symbols(void)
++{
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0))
++	typedef unsigned long (*kallsyms_lookup_name_t)(const char *name);
++	struct kprobe probe;
++	int ret;
++	kallsyms_lookup_name_t kallsyms_lookup_name;
++
++	memset(&probe, 0, sizeof(probe));
++	probe.symbol_name = "kallsyms_lookup_name";
++	ret = register_kprobe(&probe);
++	if (ret)
++		return ret;
++
++	kallsyms_lookup_name = (kallsyms_lookup_name_t) probe.addr;
++	unregister_kprobe(&probe);
++#endif
++
++	__p_vsc_acquire_camera_sensor =
++		(vsc_acquire_camera_sensor_t) kallsyms_lookup_name("vsc_acquire_camera_sensor");
++	__p_vsc_release_camera_sensor =
++		(vsc_release_camera_sensor_t) kallsyms_lookup_name("vsc_release_camera_sensor");
++
++	return 0;
++}
++
+ /**
+  * @brief Acquire camera sensor ownership to IPU
+  *
+@@ -62,10 +107,13 @@ typedef void (*vsc_privacy_callback_t)(void *handle,
+  * @retval -EAGAIN VSC device not ready
+  * @retval negative values for other errors
+  */
+-int vsc_acquire_camera_sensor(struct vsc_mipi_config *config,
+-			      vsc_privacy_callback_t callback,
+-			      void *handle,
+-			      struct vsc_camera_status *status);
++static int vsc_acquire_camera_sensor(struct vsc_mipi_config *config,
++				      vsc_privacy_callback_t callback,
++				      void *handle,
++				      struct vsc_camera_status *status)
++{
++	return __p_vsc_acquire_camera_sensor(config, callback, handle, status);
++}
+ 
+ /**
+  * @brief Release camera sensor ownership
+@@ -78,6 +126,11 @@ int vsc_acquire_camera_sensor(struct vsc_mipi_config *config,
+  * @retval -EAGAIN VSC device not ready
+  * @retval negative values for other errors
+  */
+-int vsc_release_camera_sensor(struct vsc_camera_status *status);
++static int vsc_release_camera_sensor(struct vsc_camera_status *status)
++{
++	return __p_vsc_release_camera_sensor(status);
++}
++
++MODULE_SOFTDEP("pre: intel_vsc");
+ 
+ #endif
+diff --git a/drivers/media/i2c/hi556.c b/drivers/media/i2c/hi556.c
+index 7096e04..f513490 100644
+--- a/drivers/media/i2c/hi556.c
++++ b/drivers/media/i2c/hi556.c
+@@ -1111,6 +1111,10 @@ static int hi556_probe(struct i2c_client *client)
+ #endif
+ 
+ #if IS_ENABLED(CONFIG_INTEL_VSC)
++	ret = init_vsc_symbols();
++	if (ret)
++		return ret;
++
+ 	conf.lane_num = HI556_DATA_LANES;
+ 	/* frequency unit 100k */
+ 	conf.freq = HI556_LINK_FREQ_437MHZ / 100000;
+diff --git a/drivers/media/i2c/hm2170.c b/drivers/media/i2c/hm2170.c
+index 08ca2fe..264a6ff 100644
+--- a/drivers/media/i2c/hm2170.c
++++ b/drivers/media/i2c/hm2170.c
+@@ -921,6 +921,10 @@ static int hm2170_probe(struct i2c_client *client)
+ #endif
+ 
+ #if IS_ENABLED(CONFIG_INTEL_VSC)
++	ret = init_vsc_symbols();
++	if (ret)
++		return ret;
++
+ 	conf.lane_num = HM2170_DATA_LANES;
+ 	/* frequency unit 100k */
+ 	conf.freq = HM2170_LINK_FREQ_384MHZ / 100000;
+diff --git a/drivers/media/i2c/ov01a10.c b/drivers/media/i2c/ov01a10.c
+index ccd1cc7..fc06d63 100644
+--- a/drivers/media/i2c/ov01a10.c
++++ b/drivers/media/i2c/ov01a10.c
+@@ -885,6 +885,10 @@ static int ov01a10_probe(struct i2c_client *client)
+ #endif
+ 
+ #if IS_ENABLED(CONFIG_INTEL_VSC)
++	ret = init_vsc_symbols();
++	if (ret)
++		return ret;
++
+ 	conf.lane_num = OV01A10_DATA_LANES;
+ 	/* frequency unit 100k */
+ 	conf.freq = OV01A10_LINK_FREQ_400MHZ / 100000;
+diff --git a/drivers/media/i2c/ov01a1s.c b/drivers/media/i2c/ov01a1s.c
+index 48e3a3e..7f62fa8 100644
+--- a/drivers/media/i2c/ov01a1s.c
++++ b/drivers/media/i2c/ov01a1s.c
+@@ -967,6 +967,12 @@ static int ov01a1s_probe(struct i2c_client *client)
+ 	s64 link_freq;
+ #endif
+ 
++#if IS_ENABLED(CONFIG_INTEL_VSC)
++	ret = init_vsc_symbols();
++	if (ret)
++		return ret;
++#endif
++
+ 	ov01a1s = devm_kzalloc(&client->dev, sizeof(*ov01a1s), GFP_KERNEL);
+ 	if (!ov01a1s)
+ 		return -ENOMEM;
+diff --git a/drivers/media/i2c/ov02c10.c b/drivers/media/i2c/ov02c10.c
+index 06e1c80..ebaa149 100644
+--- a/drivers/media/i2c/ov02c10.c
++++ b/drivers/media/i2c/ov02c10.c
+@@ -1298,6 +1298,10 @@ static int ov02c10_probe(struct i2c_client *client)
+ #endif
+ 
+ #if IS_ENABLED(CONFIG_INTEL_VSC)
++	ret = init_vsc_symbols();
++	if (ret)
++		return ret;
++
+ 	conf.lane_num = OV02C10_DATA_LANES;
+ 	/* frequency unit 100k */
+ 	conf.freq = OV02C10_LINK_FREQ_400MHZ / 100000;

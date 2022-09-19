@@ -1,0 +1,181 @@
+From: "You-Sheng Yang (vicamo)" <vicamo.yang@canonical.com>
+Date: Tue, 11 Oct 2022 17:36:44 +0800
+Subject: build: drop inlined vsc builds
+
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
+---
+ Makefile  |  33 -------------------
+ dkms.conf | 109 +++++++++++++++++++++++---------------------------------------
+ 2 files changed, 40 insertions(+), 102 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index f8bc96b..43c459b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,37 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0
+ # Copyright (c) 2022 Intel Corporation.
+ 
+-obj-m += ljca.o
+-ljca-y := drivers/mfd/ljca.o
+-
+-obj-m += spi-ljca.o
+-spi-ljca-y := drivers/spi/spi-ljca.o
+-
+-obj-m += gpio-ljca.o
+-gpio-ljca-y := drivers/gpio/gpio-ljca.o
+-
+-obj-m += i2c-ljca.o
+-i2c-ljca-y := drivers/i2c/busses/i2c-ljca.o
+-
+-obj-m += mei-vsc.o
+-mei-vsc-y := drivers/misc/mei/spi-vsc.o
+-mei-vsc-y += drivers/misc/mei/hw-vsc.o
+-
+-obj-m += intel_vsc.o
+-intel_vsc-y := drivers/misc/ivsc/intel_vsc.o
+-
+-obj-m += mei_csi.o
+-mei_csi-y := drivers/misc/ivsc/mei_csi.o
+-
+-obj-m += mei_ace.o
+-mei_ace-y := drivers/misc/ivsc/mei_ace.o
+-
+-obj-m += mei_pse.o
+-mei_pse-y := drivers/misc/ivsc/mei_pse.o
+-
+-obj-m += mei_ace_debug.o
+-mei_ace_debug-y := drivers/misc/ivsc/mei_ace_debug.o
+-
+ export CONFIG_INTEL_VSC = m
+ 
+ export CONFIG_VIDEO_INTEL_IPU6 = m
+@@ -52,8 +21,6 @@ KERNELRELEASE ?= $(shell uname -r)
+ KERNEL_SRC ?= /lib/modules/$(KERNELRELEASE)/build
+ MODSRC := $(shell pwd)
+ 
+-ccflags-y += -I$(src)/backport-include/drivers/misc/mei/
+-
+ subdir-ccflags-y += -I$(src)/include/
+ 
+ subdir-ccflags-$(CONFIG_INTEL_VSC) += \
+diff --git a/dkms.conf b/dkms.conf
+index 61048b0..83b0fd0 100644
+--- a/dkms.conf
++++ b/dkms.conf
+@@ -4,75 +4,46 @@ PACKAGE_VERSION="#MODULE_VERSION#"
+ MAKE="make KERNELRELEASE=$kernelver KERNEL_SRC=$kernel_source_dir"
+ CLEAN="make KERNELRELEASE=$kernelver KERNEL_SRC=$kernel_source_dir clean"
+ 
+-BUILT_MODULE_NAME[0]="ljca"
+-DEST_MODULE_LOCATION[0]="/updates"
+-
+-BUILT_MODULE_NAME[1]="spi-ljca"
+-DEST_MODULE_LOCATION[1]="/updates"
+-
+-BUILT_MODULE_NAME[2]="gpio-ljca"
+-DEST_MODULE_LOCATION[2]="/updates"
+-
+-BUILT_MODULE_NAME[3]="i2c-ljca"
+-DEST_MODULE_LOCATION[3]="/updates"
+-
+-BUILT_MODULE_NAME[4]="mei-vsc"
+-DEST_MODULE_LOCATION[4]="/updates"
+-
+-BUILT_MODULE_NAME[5]="intel_vsc"
+-DEST_MODULE_LOCATION[5]="/updates"
+-
+-BUILT_MODULE_NAME[6]="mei_csi"
+-DEST_MODULE_LOCATION[6]="/updates"
+-
+-BUILT_MODULE_NAME[7]="mei_ace"
+-DEST_MODULE_LOCATION[7]="/updates"
+-
+-BUILT_MODULE_NAME[8]="mei_pse"
+-DEST_MODULE_LOCATION[8]="/updates"
+-
+-BUILT_MODULE_NAME[9]="mei_ace_debug"
+-DEST_MODULE_LOCATION[9]="/updates"
+-
+-BUILT_MODULE_NAME[10]="intel-ipu6"
+-BUILT_MODULE_LOCATION[10]="drivers/media/pci/intel/ipu6"
+-DEST_MODULE_LOCATION[10]="/updates"
+-
+-BUILT_MODULE_NAME[11]="intel-ipu6-isys"
+-BUILT_MODULE_LOCATION[11]="drivers/media/pci/intel/ipu6"
+-DEST_MODULE_LOCATION[11]="/updates"
+-
+-BUILT_MODULE_NAME[12]="intel-ipu6-psys"
+-BUILT_MODULE_LOCATION[12]="drivers/media/pci/intel/ipu6"
+-DEST_MODULE_LOCATION[12]="/updates"
+-
+-BUILT_MODULE_NAME[13]="hm11b1"
+-BUILT_MODULE_LOCATION[13]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[13]="/updates"
+-
+-BUILT_MODULE_NAME[14]="ov01a1s"
+-BUILT_MODULE_LOCATION[14]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[14]="/updates"
+-
+-BUILT_MODULE_NAME[15]="ov01a10"
+-BUILT_MODULE_LOCATION[15]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[15]="/updates"
+-
+-BUILT_MODULE_NAME[16]="ov02c10"
+-BUILT_MODULE_LOCATION[16]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[16]="/updates"
+-
+-BUILT_MODULE_NAME[17]="ov2740"
+-BUILT_MODULE_LOCATION[17]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[17]="/updates"
+-
+-BUILT_MODULE_NAME[18]="hm2170"
+-BUILT_MODULE_LOCATION[18]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[18]="/updates"
+-
+-BUILT_MODULE_NAME[19]="hi556"
+-BUILT_MODULE_LOCATION[19]="drivers/media/i2c"
+-DEST_MODULE_LOCATION[19]="/updates"
++i=0
++BUILT_MODULE_NAME[$i]="intel-ipu6"
++BUILT_MODULE_LOCATION[$i]="drivers/media/pci/intel/ipu6"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="intel-ipu6-isys"
++BUILT_MODULE_LOCATION[$i]="drivers/media/pci/intel/ipu6"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="intel-ipu6-psys"
++BUILT_MODULE_LOCATION[$i]="drivers/media/pci/intel/ipu6"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="hm11b1"
++BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="ov01a1s"
++BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="ov01a10"
++BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="ov02c10"
++BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="ov2740"
++BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="hm2170"
++BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++DEST_MODULE_LOCATION[$i]="/updates"
++
++BUILT_MODULE_NAME[$((++i))]="hi556"
++BUILT_MODULE_LOCATION[$i]="drivers/media/i2c"
++DEST_MODULE_LOCATION[$i]="/updates"
+ 
+ REMAKE_INITRD="no"
+ AUTOINSTALL="yes"

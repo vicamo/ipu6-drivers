@@ -1,4 +1,3 @@
 0001-build-disable-ivsc-depending-sensors.patch
 0002-dkms-use-debian-package-version-as-PACKAGE_VERSION.patch
-0003-compat-fix-media_entity_remote_pad-renamed-to-media_.patch
-0004-build-fix-kernel-feature-macro-definitions.patch
+0003-build-fix-kernel-feature-macro-definitions.patch

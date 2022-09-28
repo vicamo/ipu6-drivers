@@ -609,7 +609,11 @@ static int link_validate(struct media_link *link)
 		return -EINVAL;
 	sd = media_entity_to_v4l2_subdev(link->source->entity);
 	if (is_external(av, link->source->entity)) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
 		ip->external = media_entity_remote_pad(av->vdev.entity.pads);
+#else
+		ip->external = media_pad_remote_pad_first(av->vdev.entity.pads);
+#endif
 		ip->source = to_ipu_isys_subdev(sd)->source;
 	}
 
@@ -682,10 +686,17 @@ static int get_external_facing_format(struct ipu_isys_pipeline *ip,
 		return -ENODEV;
 	}
 	sd = media_entity_to_v4l2_subdev(ip->external->entity);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
 	external_facing = (strncmp(sd->name, IPU_ISYS_ENTITY_PREFIX,
 			   strlen(IPU_ISYS_ENTITY_PREFIX)) == 0) ?
 			   ip->external :
 			   media_entity_remote_pad(ip->external);
+#else
+	external_facing = (strncmp(sd->name, IPU_ISYS_ENTITY_PREFIX,
+			   strlen(IPU_ISYS_ENTITY_PREFIX)) == 0) ?
+			   ip->external :
+			   media_pad_remote_pad_first(ip->external);
+#endif
 	if (WARN_ON(!external_facing)) {
 		dev_warn(&av->isys->adev->dev,
 			 "no external facing pad --- driver bug?\n");
@@ -1037,7 +1048,11 @@ static int start_stream_firmware(struct ipu_isys_video *av,
 	struct ipu_isys_video *isl_av = NULL;
 	struct v4l2_subdev_format source_fmt = { 0 };
 	struct v4l2_subdev *be_sd = NULL;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
 	struct media_pad *source_pad = media_entity_remote_pad(&av->pad);
+#else
+	struct media_pad *source_pad = media_pad_remote_pad_first(&av->pad);
+#endif
 	struct ipu_fw_isys_cropping_abi *crop;
 	enum ipu_fw_isys_send_type send_type;
 	int rval, rvalout, tout;

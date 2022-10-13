@@ -13,18 +13,6 @@ jobs:
                         - name: Checkout
                           uses: actions/checkout@v3
 
-                        - name: Checkout ivsc-driver repo
-                          uses: actions/checkout@v3
-                          with:
-                            repository: intel/ivsc-driver
-                            path: ivsc-driver
-
-                        - name: Merge with ivsc-driver
-                          shell: bash
-                          run: |
-                                  cp -r ivsc-driver/backport-include ivsc-driver/drivers ivsc-driver/include .
-                                  rm -rf ivsc-driver
-
                         - name: Prepare environment
                           shell: bash
                           run: |

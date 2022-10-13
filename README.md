@@ -164,14 +164,6 @@ Three ways are available:
 	```
 ### 2. Build outside kernel source tree
 - Requires kernel header installed on build machine
-- Requires iVSC driver be built together
-- To prepare dependency:
-	```sh
-	cd ipu6-drivers
-	git clone https://github.com/intel/ivsc-driver.git
-	cp -r ivsc-driver/backport-include ivsc-driver/drivers ivsc-driver/include .
-	rm -rf ivsc-driver
-	```
 
 - To build and install:
 	```sh
@@ -179,14 +171,6 @@ Three ways are available:
 	```
 
 ### 3. Build with dkms
-- Prepare dependency:
-	```sh
-	cd ipu6-drivers
-	git clone https://github.com/intel/ivsc-driver.git
-	cp -r ivsc-driver/backport-include ivsc-driver/drivers ivsc-driver/include .
-	rm -rf ivsc-driver
-	```
-
 - Register, build and auto install:
 	```sh
 	sudo dkms add .

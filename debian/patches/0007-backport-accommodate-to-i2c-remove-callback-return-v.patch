@@ -1,0 +1,403 @@
+From: "You-Sheng Yang (vicamo)" <vicamo.yang@canonical.com>
+Date: Fri, 21 Oct 2022 16:35:16 +0800
+Subject: backport: accommodate to i2c remove callback return void
+
+Closes: #54
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
+---
+ drivers/media/i2c/hi556.c         | 12 +++++++++++-
+ drivers/media/i2c/hm11b1.c        | 12 +++++++++++-
+ drivers/media/i2c/hm2170.c        | 13 ++++++++++++-
+ drivers/media/i2c/ov01a10.c       | 12 +++++++++++-
+ drivers/media/i2c/ov01a1s.c       | 12 +++++++++++-
+ drivers/media/i2c/ov02c10.c       | 12 +++++++++++-
+ drivers/media/i2c/ov13858_intel.c | 13 ++++++++++++-
+ drivers/media/i2c/ov2740.c        | 12 +++++++++++-
+ drivers/media/i2c/ov8856.c        | 12 +++++++++++-
+ 9 files changed, 101 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/media/i2c/hi556.c b/drivers/media/i2c/hi556.c
+index f513490..f0bb68a 100644
+--- a/drivers/media/i2c/hi556.c
++++ b/drivers/media/i2c/hi556.c
+@@ -1086,7 +1086,7 @@ static const struct v4l2_subdev_internal_ops hi556_internal_ops = {
+ 	.open = hi556_open,
+ };
+ 
+-static int hi556_remove(struct i2c_client *client)
++static void hi556_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct hi556 *hi556 = to_hi556(sd);
+@@ -1096,9 +1096,15 @@ static int hi556_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&hi556->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int hi556_remove_bp(struct i2c_client *client)
++{
++	hi556_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ static int hi556_probe(struct i2c_client *client)
+ {
+@@ -1219,7 +1225,11 @@ static struct i2c_driver hi556_i2c_driver = {
+ 		.acpi_match_table = ACPI_PTR(hi556_acpi_ids),
+ 	},
+ 	.probe_new = hi556_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = hi556_remove_bp,
++#else
+ 	.remove = hi556_remove,
++#endif
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 17, 0)
+ 	.flags = I2C_DRV_ACPI_WAIVE_D0_PROBE,
+ #endif
+diff --git a/drivers/media/i2c/hm11b1.c b/drivers/media/i2c/hm11b1.c
+index b4d51bc..1cc5cd7 100644
+--- a/drivers/media/i2c/hm11b1.c
++++ b/drivers/media/i2c/hm11b1.c
+@@ -1053,7 +1053,7 @@ static int hm11b1_identify_module(struct hm11b1 *hm11b1)
+ 	return 0;
+ }
+ 
+-static int hm11b1_remove(struct i2c_client *client)
++static void hm11b1_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct hm11b1 *hm11b1 = to_hm11b1(sd);
+@@ -1063,9 +1063,15 @@ static int hm11b1_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&hm11b1->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int hm11b1_remove_bp(struct i2c_client *client)
++{
++	hm11b1_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ #if IS_ENABLED(CONFIG_INTEL_SKL_INT3472)
+ static int hm11b1_parse_dt(struct hm11b1 *hm11b1)
+@@ -1205,7 +1211,11 @@ static struct i2c_driver hm11b1_i2c_driver = {
+ 		.acpi_match_table = ACPI_PTR(hm11b1_acpi_ids),
+ 	},
+ 	.probe_new = hm11b1_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = hm11b1_remove_bp,
++#else
+ 	.remove = hm11b1_remove,
++#endif
+ };
+ 
+ module_i2c_driver(hm11b1_i2c_driver);
+diff --git a/drivers/media/i2c/hm2170.c b/drivers/media/i2c/hm2170.c
+index 264a6ff..dc8c440 100644
+--- a/drivers/media/i2c/hm2170.c
++++ b/drivers/media/i2c/hm2170.c
+@@ -9,6 +9,7 @@
+ #include <linux/pm_runtime.h>
+ #include <linux/nvmem-provider.h>
+ #include <linux/regmap.h>
++#include <linux/version.h>
+ #include <media/v4l2-ctrls.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-fwnode.h>
+@@ -897,7 +898,7 @@ static int hm2170_identify_module(struct hm2170 *hm2170)
+ 	return 0;
+ }
+ 
+-static int hm2170_remove(struct i2c_client *client)
++static void hm2170_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct hm2170 *hm2170 = to_hm2170(sd);
+@@ -907,9 +908,15 @@ static int hm2170_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&hm2170->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int hm2170_remove_bp(struct i2c_client *client)
++{
++	hm2170_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ static int hm2170_probe(struct i2c_client *client)
+ {
+@@ -1021,7 +1028,11 @@ static struct i2c_driver hm2170_i2c_driver = {
+ 		.acpi_match_table = hm2170_acpi_ids,
+ 	},
+ 	.probe_new = hm2170_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = hm2170_remove_bp,
++#else
+ 	.remove = hm2170_remove,
++#endif
+ };
+ 
+ module_i2c_driver(hm2170_i2c_driver);
+diff --git a/drivers/media/i2c/ov01a10.c b/drivers/media/i2c/ov01a10.c
+index fc06d63..3031e9e 100644
+--- a/drivers/media/i2c/ov01a10.c
++++ b/drivers/media/i2c/ov01a10.c
+@@ -861,7 +861,7 @@ static int ov01a10_identify_module(struct ov01a10 *ov01a10)
+ 	return 0;
+ }
+ 
+-static int ov01a10_remove(struct i2c_client *client)
++static void ov01a10_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct ov01a10 *ov01a10 = to_ov01a10(sd);
+@@ -871,9 +871,15 @@ static int ov01a10_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&ov01a10->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int ov01a10_remove_bp(struct i2c_client *client)
++{
++	ov01a10_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ static int ov01a10_probe(struct i2c_client *client)
+ {
+@@ -988,7 +994,11 @@ static struct i2c_driver ov01a10_i2c_driver = {
+ 		.acpi_match_table = ACPI_PTR(ov01a10_acpi_ids),
+ 	},
+ 	.probe_new = ov01a10_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = ov01a10_remove_bp,
++#else
+ 	.remove = ov01a10_remove,
++#endif
+ };
+ 
+ module_i2c_driver(ov01a10_i2c_driver);
+diff --git a/drivers/media/i2c/ov01a1s.c b/drivers/media/i2c/ov01a1s.c
+index 7f62fa8..9e6fc8c 100644
+--- a/drivers/media/i2c/ov01a1s.c
++++ b/drivers/media/i2c/ov01a1s.c
+@@ -905,7 +905,7 @@ static int ov01a1s_identify_module(struct ov01a1s *ov01a1s)
+ 	return 0;
+ }
+ 
+-static int ov01a1s_remove(struct i2c_client *client)
++static void ov01a1s_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct ov01a1s *ov01a1s = to_ov01a1s(sd);
+@@ -915,9 +915,15 @@ static int ov01a1s_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&ov01a1s->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int ov01a1s_remove_bp(struct i2c_client *client)
++{
++	ov01a1s_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ #if IS_ENABLED(CONFIG_INTEL_SKL_INT3472)
+ static int ov01a1s_parse_dt(struct ov01a1s *ov01a1s)
+@@ -1084,7 +1090,11 @@ static struct i2c_driver ov01a1s_i2c_driver = {
+ 		.acpi_match_table = ACPI_PTR(ov01a1s_acpi_ids),
+ 	},
+ 	.probe_new = ov01a1s_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = ov01a1s_remove_bp,
++#else
+ 	.remove = ov01a1s_remove,
++#endif
+ };
+ 
+ module_i2c_driver(ov01a1s_i2c_driver);
+diff --git a/drivers/media/i2c/ov02c10.c b/drivers/media/i2c/ov02c10.c
+index ebaa149..cf5dd1c 100644
+--- a/drivers/media/i2c/ov02c10.c
++++ b/drivers/media/i2c/ov02c10.c
+@@ -1274,7 +1274,7 @@ static int ov02c10_identify_module(struct ov02c10 *ov02c10)
+ 	return 0;
+ }
+ 
+-static int ov02c10_remove(struct i2c_client *client)
++static void ov02c10_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct ov02c10 *ov02c10 = to_ov02c10(sd);
+@@ -1284,9 +1284,15 @@ static int ov02c10_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&ov02c10->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int ov02c10_remove_bp(struct i2c_client *client)
++{
++	ov02c10_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ static int ov02c10_probe(struct i2c_client *client)
+ {
+@@ -1404,7 +1410,11 @@ static struct i2c_driver ov02c10_i2c_driver = {
+ 		.acpi_match_table = ACPI_PTR(ov02c10_acpi_ids),
+ 	},
+ 	.probe_new = ov02c10_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = ov02c10_remove_bp,
++#else
+ 	.remove = ov02c10_remove,
++#endif
+ };
+ 
+ module_i2c_driver(ov02c10_i2c_driver);
+diff --git a/drivers/media/i2c/ov13858_intel.c b/drivers/media/i2c/ov13858_intel.c
+index 77d46f5..a261f15 100644
+--- a/drivers/media/i2c/ov13858_intel.c
++++ b/drivers/media/i2c/ov13858_intel.c
+@@ -5,6 +5,7 @@
+ #include <linux/i2c.h>
+ #include <linux/module.h>
+ #include <linux/pm_runtime.h>
++#include <linux/version.h>
+ #include <media/v4l2-ctrls.h>
+ #include <media/v4l2-device.h>
+ #include <media/v4l2-fwnode.h>
+@@ -2013,7 +2014,7 @@ error_handler_free:
+ 	return ret;
+ }
+ 
+-static int ov13858_remove(struct i2c_client *client)
++static void ov13858_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct ov13858 *ov13858 = to_ov13858(sd);
+@@ -2023,9 +2024,15 @@ static int ov13858_remove(struct i2c_client *client)
+ 	ov13858_free_controls(ov13858);
+ 
+ 	pm_runtime_disable(&client->dev);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int ov13858_remove_bp(struct i2c_client *client)
++{
++	ov13858_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ static const struct i2c_device_id ov13858_id_table[] = {
+ 	{"ov13858", 0},
+@@ -2054,7 +2061,11 @@ static struct i2c_driver ov13858_i2c_driver = {
+ 		.acpi_match_table = ACPI_PTR(ov13858_acpi_ids),
+ 	},
+ 	.probe = ov13858_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = ov13858_remove_bp,
++#else
+ 	.remove = ov13858_remove,
++#endif
+ 	.id_table = ov13858_id_table,
+ };
+ 
+diff --git a/drivers/media/i2c/ov2740.c b/drivers/media/i2c/ov2740.c
+index 3d7adee..50a083f 100644
+--- a/drivers/media/i2c/ov2740.c
++++ b/drivers/media/i2c/ov2740.c
+@@ -1363,7 +1363,7 @@ check_hwcfg_error:
+ 	return ret;
+ }
+ 
+-static int ov2740_remove(struct i2c_client *client)
++static void ov2740_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct ov2740 *ov2740 = to_ov2740(sd);
+@@ -1373,9 +1373,15 @@ static int ov2740_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&ov2740->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int ov2740_remove_bp(struct i2c_client *client)
++{
++	ov2740_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ static int ov2740_nvmem_read(void *priv, unsigned int off, void *val,
+ 			     size_t count)
+@@ -1571,7 +1577,11 @@ static struct i2c_driver ov2740_i2c_driver = {
+ 		.acpi_match_table = ov2740_acpi_ids,
+ 	},
+ 	.probe_new = ov2740_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = ov2740_remove_bp,
++#else
+ 	.remove = ov2740_remove,
++#endif
+ };
+ 
+ module_i2c_driver(ov2740_i2c_driver);
+diff --git a/drivers/media/i2c/ov8856.c b/drivers/media/i2c/ov8856.c
+index 4a19ef0..582c030 100644
+--- a/drivers/media/i2c/ov8856.c
++++ b/drivers/media/i2c/ov8856.c
+@@ -1197,7 +1197,7 @@ static int ov8856_identify_module(struct ov8856 *ov8856)
+ 	return 0;
+ }
+ 
+-static int ov8856_remove(struct i2c_client *client)
++static void ov8856_remove(struct i2c_client *client)
+ {
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct ov8856 *ov8856 = to_ov8856(sd);
+@@ -1207,9 +1207,15 @@ static int ov8856_remove(struct i2c_client *client)
+ 	v4l2_ctrl_handler_free(sd->ctrl_handler);
+ 	pm_runtime_disable(&client->dev);
+ 	mutex_destroy(&ov8856->mutex);
++}
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++static int ov8856_remove_bp(struct i2c_client *client)
++{
++	ov8856_remove(client);
+ 	return 0;
+ }
++#endif
+ 
+ static int ov8856_probe(struct i2c_client *client)
+ {
+@@ -1303,7 +1309,11 @@ static struct i2c_driver ov8856_i2c_driver = {
+ 		.acpi_match_table = ACPI_PTR(ov8856_acpi_ids),
+ 	},
+ 	.probe_new = ov8856_probe,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++	.remove = ov8856_remove_bp,
++#else
+ 	.remove = ov8856_remove,
++#endif
+ 	.id_table = ov8856_id_table,
+ };
+ 

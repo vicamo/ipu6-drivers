@@ -4,3 +4,4 @@
 0004-build-drop-inlined-vsc-builds.patch
 0005-ivsc-import-headers.patch
 0006-ivsc-load-symbols-by-kprobe.patch
+0007-backport-accommodate-to-i2c-remove-callback-return-v.patch

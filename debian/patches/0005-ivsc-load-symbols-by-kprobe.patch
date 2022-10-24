@@ -22,9 +22,9 @@ index 43c459b..32f3d70 100644
  MODSRC := $(shell pwd)
  
 -subdir-ccflags-y += -I$(src)/include/
-+subdir-ccflags-y += \
-+	-I$(src)/backport-include/ \
-+	-I$(src)/include/
++NOSTDINC_FLAGS += \
++	-I$(M)/backport-include/ \
++	-I$(M)/include/
  
  subdir-ccflags-$(CONFIG_INTEL_VSC) += \
          -DCONFIG_INTEL_VSC_MODULE=1

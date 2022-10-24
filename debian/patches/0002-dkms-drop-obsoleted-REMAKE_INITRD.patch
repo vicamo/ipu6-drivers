@@ -1,0 +1,19 @@
+From: "You-Sheng Yang (vicamo)" <vicamo.yang@canonical.com>
+Date: Mon, 24 Oct 2022 15:54:05 +0800
+Subject: dkms: drop obsoleted REMAKE_INITRD
+
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
+---
+ dkms.conf | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/dkms.conf b/dkms.conf
+index 61048b0..55c2c42 100644
+--- a/dkms.conf
++++ b/dkms.conf
+@@ -74,5 +74,4 @@ BUILT_MODULE_NAME[19]="hi556"
+ BUILT_MODULE_LOCATION[19]="drivers/media/i2c"
+ DEST_MODULE_LOCATION[19]="/updates"
+ 
+-REMAKE_INITRD="no"
+ AUTOINSTALL="yes"

@@ -1,5 +1,6 @@
 0001-dkms-use-debian-package-version-as-PACKAGE_VERSION.patch
-0002-build-fix-kernel-feature-macro-definitions.patch
-0003-build-drop-inlined-vsc-builds.patch
-0004-ivsc-import-headers.patch
-0005-ivsc-load-symbols-by-kprobe.patch
+0002-dkms-drop-obsoleted-REMAKE_INITRD.patch
+0003-build-fix-kernel-feature-macro-definitions.patch
+0004-build-drop-inlined-vsc-builds.patch
+0005-ivsc-import-headers.patch
+0006-ivsc-load-symbols-by-kprobe.patch

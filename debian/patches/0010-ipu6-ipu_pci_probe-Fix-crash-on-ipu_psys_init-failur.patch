@@ -1,0 +1,44 @@
+From: Hans de Goede <hdegoede@redhat.com>
+Date: Fri, 21 Oct 2022 11:03:32 +0200
+Subject: ipu6: ipu_pci_probe(): Fix crash on ipu_psys_init() failure
+
+ipu_psys_init() may fail when acpi_dev_ready_for_enumeration() returns
+false.
+
+ipu_pci_probe() was leaving the ERR_PTR() returned in this case stored
+in the isp->isys pointer which then later got dereferenced in an attempt
+to clean things up, leading to a crash.
+
+Properly clear the isp->isys pointer after reading the error-code to
+fix this crash.
+
+And also apply the same fix to the error-handling path of
+the ipu_psys_init() call.
+
+Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+(cherry picked from commit 5a36712499e83cdf1ec6b89e13df573e09ebe565)
+Signed-off-by: You-Sheng Yang (vicamo) <vicamo.yang@canonical.com>
+---
+ drivers/media/pci/intel/ipu.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/media/pci/intel/ipu.c b/drivers/media/pci/intel/ipu.c
+index 34709d4..879f137 100644
+--- a/drivers/media/pci/intel/ipu.c
++++ b/drivers/media/pci/intel/ipu.c
+@@ -565,6 +565,7 @@ static int ipu_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+ 				  0);
+ 	if (IS_ERR(isp->isys)) {
+ 		rval = PTR_ERR(isp->isys);
++		isp->isys = NULL;
+ 		goto out_ipu_bus_del_devices;
+ 	}
+ 
+@@ -582,6 +583,7 @@ static int ipu_pci_probe(struct pci_dev *pdev, const struct pci_device_id *id)
+ 				  &psys_ipdata, 0);
+ 	if (IS_ERR(isp->psys)) {
+ 		rval = PTR_ERR(isp->psys);
++		isp->psys = NULL;
+ 		goto out_ipu_bus_del_devices;
+ 	}
+ 

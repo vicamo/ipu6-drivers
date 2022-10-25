@@ -5,3 +5,9 @@
 0005-ivsc-import-headers.patch
 0006-ivsc-load-symbols-by-kprobe.patch
 0007-backport-accommodate-to-i2c-remove-callback-return-v.patch
+0008-Makefile-Disable-Wtype-limits-warnings.patch
+0009-ipu6-ipu_isys-psys_init-Fix-error-propagation.patch
+0010-ipu6-ipu_pci_probe-Fix-crash-on-ipu_psys_init-failur.patch
+0011-ipu6-ipu_pci_probe-Fix-Runtime-PM-usage-count-underf.patch
+0012-ipu-bus-Split-ipu_bus_add_device-into-initialize-add.patch
+0013-ipu-bus-Fix-ipu_bus_device-memory-management.patch

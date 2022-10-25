@@ -1,3 +1,18 @@
+ipu6-drivers (0~git202210090801.4ef83f20-0ubuntu1+pr58.1) kinetic; urgency=low
+
+  [Hans de Goede]
+
+  * IPU6 probe ordering fixes
+    - Makefile: Disable -Wtype-limits warnings
+    - ipu6: ipu_isys/psys_init(): Fix error propagation
+    - ipu6: ipu_pci_probe(): Fix crash on ipu_psys_init() failure
+    - ipu6: ipu_pci_probe(): Fix "Runtime PM usage count underflow!" on probe
+      errors
+    - ipu-bus: Split ipu_bus_add_device() into initialize() + add()
+    - ipu-bus: Fix ipu_bus_device memory management
+
+ -- You-Sheng Yang <vicamo.yang@canonical.com>  Tue, 25 Oct 2022 09:43:18 +0800
+
 ipu6-drivers (0~git202210090801.4ef83f20-0ubuntu1) kinetic; urgency=low
 
   * Initial release. (LP: #1972109)

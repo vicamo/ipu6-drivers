@@ -1,0 +1,207 @@
+---
+name: test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  mainline:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - kver: '6.8'
+            usbio_ref: WW50'23-USBIO-PV
+    env:
+      DEBIAN_FRONTEND: 'noninteractive'
+      KORG_STABLE_URL: 'https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git'
+    steps:
+      - name: Git Identity
+        run: |
+           git config --global user.name "github-actions[bot]"
+           git config --global user.email "${{ github.actor_id }}+github-actions.bot@users.noreply.github.com"
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update --quiet
+          sudo apt-get install --no-install-recommends --yes --quiet \
+              bison \
+              build-essential \
+              dwarves \
+              equivs \
+              fakeroot \
+              flex \
+              git \
+              libelf-dev \
+              liblz4-tool \
+              libncurses-dev \
+              libssl-dev \
+              rsync \
+              ;
+
+      - name: Checkout kernel source
+        run: git clone -o korg-stable -b linux-${{ matrix.kver }}.y --depth 1 ${KORG_STABLE_URL} linux
+
+      - name: Checkout ipu6-drivers
+        uses: actions/checkout@v4
+        with:
+          path: ipu6-drivers
+
+      - name: Generate LOCALVERSION string
+        id: localversion
+        run: |
+          sha=${{ github.sha }}
+          short_sha=${sha:0:12}
+
+          if [ ${{ github.event_name }} = 'pull_request' ]; then
+            LOCALVERSION=pr${{ github.event.pull_request.number }}
+          else
+            LOCALVERSION=$(date +%Y%m%d)+git${short_sha}
+          fi
+          LOCALVERSION=-ipu6-${LOCALVERSION}-${{ github.run_id }}
+
+          echo "localversion=${LOCALVERSION}" | tee -a "${GITHUB_OUTPUT}"
+
+      - name: Copy ipu6-drivers sources
+        run: |
+          echo "::group::rsync"
+          rsync -av --exclude='Makefile' ipu6-drivers/drivers/media/pci/intel/* linux/drivers/media/pci/intel
+          rsync -av --exclude='Makefile' ipu6-drivers/drivers/media/i2c/* linux/drivers/media/i2c
+          rsync -av ipu6-drivers/drivers/media/pci/intel/ipu6/Makefile linux/drivers/media/pci/intel/ipu6
+          rsync -av ipu6-drivers/include/* linux/include
+          git -C linux add .
+          git -C linux commit -m "Sync ipu6-drivers sources commit ${{ github.sha }}" --no-edit
+          echo "::endgroup::"
+
+          # Already in v6.8.8
+          rm ipu6-drivers/patch/v6.8/0005-mei-vsc-Unregister-interrupt-handler-for-system-susp.patch
+
+          git -C linux am ${{ github.workspace }}/ipu6-drivers/patch/v6.8/*.patch
+
+      - name: Checkout usbio-drivers
+        uses: actions/checkout@v4
+        with:
+          repository: intel/usbio-drivers
+          ref: ${{ matrix.usbio_ref }}
+          path: usbio-drivers
+
+      - name: Patch usbio-drivers sources
+        working-directory: ./usbio-drivers
+        run: |
+          sed -e 's,strlcpy,strscpy,' \
+              -e 's,^void usbio_dump,static void usbio_dump,' \
+              -i drivers/mfd/usbio.c
+          sed -e 's,usbi_unregister_event_cb,usbio_unregister_event_cb,' \
+              -i include/linux/mfd/usbio.h
+
+      - name: Copy usbio-drivers sources
+        run: |
+          echo "::group::rsync"
+          rsync -av usbio-drivers/drivers/* linux/drivers
+          rsync -av usbio-drivers/include/* linux/include
+          git -C linux add .
+          git -C linux commit -m "Sync usbio-drivers sources tag ${{ matrix.usbio_ref }}" --no-edit
+          echo "::endgroup::"
+
+          cat <<EOL | tee -a linux/drivers/mfd/Kconfig
+
+          config MFD_USBIO
+                  tristate "Intel USBIO extension support"
+                  select MFD_CORE
+                  depends on USB
+                  help
+                    This adds support for Intel USBIO (I2C/SPI/GPIO)
+                    Extension. Additional drivers such as GPIO_USBIO,
+                    I2C_USBIO, etc. must be enabled in order to use the
+                    functionality of the device.
+          EOL
+          echo "obj-\$(CONFIG_MFD_USBIO) += usbio.o" | tee -a linux/drivers/mfd/Makefile
+
+          cat <<EOL | tee -a linux/drivers/gpio/Kconfig
+          config GPIO_USBIO
+                  tristate "INTEL USBIO GPIO Extension support"
+                  depends on MFD_USBIO
+                  help
+                    Select this option to enable GPIO driver for the INTEL
+                    USBIO GPIO Extension.
+          
+                    This driver can also be built as a module. If so, the module
+                    will be called gpio-usbio.
+          EOL
+          echo "obj-\$(CONFIG_GPIO_USBIO) += gpio-usbio.o" | tee -a linux/drivers/gpio/Makefile
+
+          cat <<EOL | tee -a linux/drivers/i2c/busses/Kconfig
+          config I2C_USBIO
+                  tristate "INTEL USBIO I2C Extension support"
+                  depends on MFD_USBIO
+                  help
+                   If you say yes to this option, I2C functionality support of INTEL
+                   USBIO I2C Extension will be included.
+          
+                   This driver can also be built as a module.  If so, the module
+                   will be called i2c-usbio.
+          EOL
+          echo "obj-\$(CONFIG_I2C_USBIO) += i2c-usbio.o" | tee -a linux/drivers/i2c/busses/Makefile
+
+          git -C linux add .
+          git -C linux commit -m "Add usbio-drivers Kconfig/Makefile" --no-edit
+
+      - name: Save applied changes
+        working-directory: ./linux
+        run: |
+          echo "::group::git status"
+          git status
+          echo "::endgroup::"
+
+          mkdir ../patches
+          n_patches=$(git log --oneline korg-stable/linux-${{ matrix.kver }}.y.. | wc -l)
+          git format-patch --output-directory=../patches -${n_patches}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.kver }}-patches
+          path: patches/*
+
+      - name: make defconfig
+        working-directory: ./linux
+        run: |
+          make allmodconfig
+
+          # Fixup generated .config
+          sed -e 's,\(CONFIG_IPU_ISYS_BRIDGE=\).*,\1n,' \
+              -e 's,\(CONFIG_IPU_SINGLE_BE_SOC_DEVICE=\).*,\1n,' \
+              -e 's,\(CONFIG_VIDEO_INTEL_IPU_TPG=\).*,\1n,' \
+              -i .config
+
+          make oldconfig
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.kver }}-config
+          path: linux/.config
+
+      - name: make deb-pkg
+        working-directory: ./linux
+        run: |
+          make -j$(nproc) deb-pkg \
+              LOCALVERSION=${{ steps.localversion.outputs.localversion }} \
+            2>&1 | tee ../build.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.kver }}-debs
+          path: |
+            build.log
+            linux-headers-*.deb
+            linux-image-*.deb
+            linux-libc-dev-*.deb

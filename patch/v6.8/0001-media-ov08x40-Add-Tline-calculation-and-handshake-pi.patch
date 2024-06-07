@@ -316,7 +316,7 @@ index abbb0b774d43..aac42ad2ae3a 100644
 -	if (!fwnode)
 -		return -ENXIO;
 +	ep = fwnode_graph_get_next_endpoint(fwnode, NULL);
-+	dev_dbg(dev, "fwnode_graph_get_next_endpoint = %d\n", ep);
++	dev_dbg(dev, "fwnode_graph_get_next_endpoint = %p\n", ep);
 +	if (!ep)
 +	        return -EPROBE_DEFER;
  
